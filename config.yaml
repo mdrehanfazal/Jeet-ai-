@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────
+# Jeet — Private AI Assistant · configuration
+# 1 credit = $1 (simulated). Monthly budget: 35 credits.
+# Prices below are in CREDITS PER 1K TOKENS.
+# Secrets belong in config.local.yaml (gitignored) or env vars:
+#   OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY / GEMINI_API_KEY
+# ─────────────────────────────────────────────────────────────
+
+app:
+  name: "Jeet — Private AI Assistant"
+  version: "1.0.0"
+
+# Path that Jeet treats as "your project" for context indexing,
+# agent actions and file viewing. "." = this repository.
+# Absolute paths like "/home/user/my-project" work too.
+project_path: "."
+
+# Force ALL cloud requests onto the local Ollama model.
+offline_mode: false
+
+default_model: "demo"
+
+credits:
+  monthly_budget: 35.0
+  warning_threshold: 5.0   # warn when remaining credits fall below this
+
+ollama:
+  base_url: "http://localhost:11434"
+  model: "llama3.1:latest"
+
+api_keys:
+  openai: ""
+  anthropic: ""
+  google: ""
+
+# Model registry. `in_price` / `out_price` = credits per 1K tokens.
+models:
+  demo:
+    provider: demo
+    label: "Jeet Demo (Offline)"
+    model: "jeet-demo-1"
+    in_price: 0.0
+    out_price: 0.0
+    best_for: "Offline scaffolding, test & doc generation, planning"
+  gpt-5:
+    provider: openai
+    label: "GPT-5"
+    model: "gpt-5"
+    in_price: 0.00125
+    out_price: 0.010
+    best_for: "Deep reasoning, agentic refactors"
+  claude-4.5-sonnet:
+    provider: anthropic
+    label: "Claude 4.5 Sonnet"
+    model: "claude-sonnet-4-5"
+    in_price: 0.003
+    out_price: 0.015
+    best_for: "Large-context coding & reviews"
+  gemini-2.5-pro:
+    provider: google
+    label: "Gemini 2.5 Pro"
+    model: "gemini-2.5-pro"
+    in_price: 0.00125
+    out_price: 0.010
+    best_for: "Long-file analysis, multi-modal tasks"
+  ollama:
+    provider: ollama
+    label: "Ollama (Local)"
+    model: ""            # empty → uses ollama.model above
+    in_price: 0.0
+    out_price: 0.0
+    best_for: "Free, private, fully offline completions"

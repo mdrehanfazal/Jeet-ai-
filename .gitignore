@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Local secrets & config overrides
+config.local.yaml
+.env
+
+# Runtime data
+database/*.db
+.jeet/
+agent_output/
+
+# Node (if you ever add the React build)
+node_modules/
+dist/
+
+# OS
+.DS_Store

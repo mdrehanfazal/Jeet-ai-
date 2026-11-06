@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeet — Private AI Assistant</title>
+<link rel="icon" href="/static/assets/jeet-logo.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+:root{
+  --bg:#0d0e12; --bg2:#111217; --panel:#15161d; --panel2:#1a1b23; --panel3:#1f202a;
+  --border:#262733; --border2:#33344a;
+  --text:#e7e7ec; --text2:#a9a9b8; --text3:#6f7080;
+  --accent:#8b5cf6; --accent2:#ff4fa3; --accent-grad:linear-gradient(135deg,#8b5cf6 0%,#6366f1 45%,#ff4fa3 100%);
+  --green:#34d399; --yellow:#fbbf24; --red:#f87171; --blue:#60a5fa; --cyan:#22d3ee;
+  --radius:12px; --shadow:0 12px 40px rgba(0,0,0,.45);
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"Inter","SF Pro Display",-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 800px at 70% -10%,rgba(139,92,246,.14),transparent 60%),radial-gradient(900px 700px at -10% 110%,rgba(255,79,163,.10),transparent 55%),var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#2c2d3a;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid #7c5cf0;outline-offset:2px}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.topbar{height:56px;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--border);background:rgba(17,18,23,.75);backdrop-filter:blur(14px);position:relative;z-index:20}
+.topbar img.logo{width:34px;height:34px;border-radius:9px}
+.brand{line-height:1.15}
+.brand b{font-size:16px;letter-spacing:.2px}
+.brand b i{font-style:normal;background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand span{display:block;font-size:10.5px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.06em;border:1px solid}
+.badge.offline{color:#ffd166;border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08)}
+.badge.demo{color:var(--cyan);border-color:rgba(34,211,238,.35);background:rgba(34,211,238,.08)}
+.pill{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid var(--border2);background:var(--panel2);font-size:12px;color:var(--text2);transition:.15s}
+.pill:hover{border-color:var(--accent);color:var(--text)}
+.pill b{color:var(--text);font-variant-numeric:tabular-nums}
+.pill.low b{color:var(--red)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(52,211,153,.8)}
+.pill.low .dot{background:var(--red);box-shadow:0 0 8px rgba(248,113,113,.8)}
+
+/* ── Low credit banner ────────────────────────────────────── */
+.low-credit{display:flex;align-items:center;gap:10px;padding:8px 18px;font-size:12.5px;color:#ffd166;background:linear-gradient(90deg,rgba(251,191,36,.14),rgba(251,191,36,.05));border-bottom:1px solid rgba(251,191,36,.3)}
+.hidden{display:none !important}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.shell{display:flex;height:calc(100vh - 56px)}
+.low-credit:not(.hidden) ~ .shell,.shell{height:calc(100vh - 56px)}
+.sidebar{width:64px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;z-index:10}
+.nav-btn{width:46px;height:46px;border-radius:11px;border:1px solid transparent;background:transparent;color:var(--text3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.15s;position:relative}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn span{font-size:8.5px;letter-spacing:.05em;text-transform:uppercase}
+.nav-btn:hover{color:var(--text);background:var(--panel)}
+.nav-btn.active{color:#fff;background:var(--accent-grad);box-shadow:0 4px 18px rgba(139,92,246,.45)}
+.views{flex:1;min-width:0;position:relative}
+.view{position:absolute;inset:0;display:none;overflow:hidden}
+.view.active{display:flex}
+
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hint{color:var(--text3);font-size:11px}
+.warn{color:#ffd166;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:10px;padding:10px 12px;font-size:12px}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn-primary{background:var(--accent-grad);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;letter-spacing:.02em;box-shadow:0 6px 20px rgba(139,92,246,.35);transition:.15s}
+.btn-primary:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary.block{width:100%}
+.btn-primary.big{padding:11px 26px;font-size:14px}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:9px;padding:8px 14px;font-size:12.5px;transition:.15s}
+.btn-ghost:hover:not(:disabled){color:var(--text);border-color:var(--accent)}
+.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost.small{padding:6px 11px;font-size:11.5px}
+.icon-btn{background:transparent;border:none;color:var(--text3);font-size:14px;padding:4px 8px;border-radius:6px}
+.icon-btn:hover{color:var(--text);background:var(--panel3)}
+.chip-toggle{border:1px solid var(--border2);background:transparent;color:var(--text3);border-radius:999px;padding:5px 12px;font-size:11.5px;transition:.15s}
+.chip-toggle.active{color:#d6c8ff;border-color:rgba(139,92,246,.6);background:rgba(139,92,246,.14)}
+.select{background:var(--panel2);color:var(--text);border:1px solid var(--border2);border-radius:9px;padding:8px 10px;font-size:12.5px;outline:none}
+.select:focus{border-color:var(--accent)}
+.model-select{min-width:180px}
+
+/* ── Chat ───────────────────────────────────────────────── */
+.chat-wrap{display:flex;width:100%;height:100%}
+.sessions{width:250px;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:10px;padding:14px;overflow:hidden}
+.session-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.session-item{position:relative;border:1px solid transparent;border-radius:9px;padding:9px 11px;background:transparent;text-align:left;color:var(--text2);transition:.12s}
+.session-item:hover{background:var(--panel);color:var(--text)}
+.session-item.active{background:var(--panel2);border-color:var(--border2);color:var(--text)}
+.session-item .t{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.session-item .m{font-size:10px;color:var(--text3);margin-top:3px}
+.session-item .del{position:absolute;right:6px;top:8px;color:var(--text3);border:none;background:none;font-size:13px;border-radius:6px;padding:2px 6px;opacity:0}
+.session-item:hover .del{opacity:1}
+.session-item .del:hover{color:var(--red);background:rgba(248,113,113,.12)}
+
+.chat-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.messages{flex:1;overflow-y:auto;padding:26px clamp(16px,5vw,64px);display:flex;flex-direction:column;gap:18px}
+.empty-state{margin:auto;text-align:center;max-width:560px}
+.empty-state img{width:88px;height:88px;border-radius:22px;box-shadow:0 10px 40px rgba(139,92,246,.4);margin-bottom:18px}
+.empty-state h2{font-size:21px;font-weight:700;margin-bottom:6px}
+.empty-state p{color:var(--text2);margin-bottom:18px}
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.suggestion{border:1px solid var(--border2);background:var(--panel);color:var(--text2);border-radius:999px;padding:8px 14px;font-size:12px;transition:.15s}
+.suggestion:hover{color:#fff;border-color:var(--accent);transform:translateY(-1px)}
+
+.bubble{max-width:820px;padding:13px 16px;border-radius:14px;line-height:1.55;font-size:13px;animation:pop .22s ease}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.bubble.user{align-self:flex-end;background:linear-gradient(135deg,#3b2f7a,#54305c);border:1px solid #4a3f80;border-bottom-right-radius:4px}
+.bubble.assistant{align-self:flex-start;background:var(--panel);border:1px solid var(--border);border-bottom-left-radius:4px;width:fit-content}
+.bubble.error{border-color:rgba(248,113,113,.45);color:#fecaca;background:rgba(248,113,113,.08)}
+.bubble .body{white-space:normal}
+.bubble pre.code{background:#0a0b0f;border:1px solid var(--border);border-radius:9px;padding:12px;overflow-x:auto;font-family:var(--mono);font-size:12px;margin:8px 0;line-height:1.5}
+.bubble code.inline{background:#0a0b0f;border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-family:var(--mono);font-size:11.5px;color:#c4b5fd}
+.bubble h1,.bubble h2,.bubble h3,.bubble h4{margin:10px 0 6px;font-size:14px}
+.bubble ul,.bubble ol{margin:6px 0 6px 20px}
+.bubble li{margin:3px 0}
+.bubble blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--text2);margin:8px 0}
+.msg-meta{display:flex;gap:10px;margin-top:8px;font-size:10.5px;color:var(--text3);flex-wrap:wrap}
+.msg-meta b{color:var(--text2);font-weight:600}
+.msg-notice{margin-top:8px;font-size:11px;color:#ffd166;border-left:3px solid var(--yellow);padding-left:8px}
+.typing{align-self:flex-start;display:flex;gap:5px;padding:14px 18px;background:var(--panel);border:1px solid var(--border);border-radius:14px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1.15)}}
+
+.composer{margin:0 clamp(16px,5vw,64px) 16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+#chatInput{background:transparent;border:none;resize:none;outline:none;color:var(--text);font-family:var(--sans);font-size:13.5px;min-height:44px;max-height:180px;line-height:1.5}
+.composer-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.composer-left,.composer-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.open-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border2);background:var(--panel2);border-radius:8px;padding:4px 8px;font-size:11px;color:var(--text2);max-width:220px}
+.tab-chip b{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab-chip .ln{color:var(--cyan);font-family:var(--mono);font-size:10px}
+.tab-chip button{border:none;background:none;color:var(--text3);font-size:12px;padding:0 2px}
+.tab-chip button:hover{color:var(--red)}
+
+/* ── Agent ──────────────────────────────────────────────── */
+.panel{padding:28px clamp(16px,4vw,48px);overflow-y:auto;width:100%}
+.panel h1{font-size:23px;display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.panel h1 .spark{background:var(--accent-grad);border-radius:9px;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+.sub{color:var(--text2);margin-bottom:18px;max-width:720px}
+.agent-box{max-width:900px}
+#agentTask{width:100%;background:var(--panel);border:1px solid var(--border2);border-radius:12px;color:var(--text);padding:14px;font-size:13.5px;resize:vertical;outline:none;min-height:84px;font-family:var(--sans)}
+#agentTask:focus{border-color:var(--accent)}
+.agent-options{display:flex;align-items:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap}
+.switch{display:flex;align-items:center;gap:10px;color:var(--text2);font-size:12.5px;user-select:none}
+.switch input{appearance:none;width:38px;height:21px;border-radius:999px;background:var(--panel3);border:1px solid var(--border2);position:relative;transition:.2s;outline:none}
+.switch input::after{content:"";position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#8889a0;transition:.2s}
+.switch input:checked{background:rgba(139,92,246,.5);border-color:var(--accent)}
+.switch input:checked::after{left:19px;background:#fff}
+.agent-status{display:flex;align-items:center;gap:12px;color:var(--text2);margin:14px 0}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.transcript{display:flex;flex-direction:column;gap:14px;margin-top:10px;max-width:1000px}
+.t-head{display:flex;align-items:center;gap:14px;padding:16px 18px}
+.t-icon{font-size:26px}
+.t-head h3{font-size:15px}
+.t-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:10.5px;border:1px solid var(--border2);border-radius:6px;padding:2px 8px;color:var(--text2)}
+.tag.green{color:var(--green);border-color:rgba(52,211,153,.4)}
+.tag.red{color:var(--red);border-color:rgba(248,113,113,.4)}
+.tag.yellow{color:var(--yellow);border-color:rgba(251,191,36,.4)}
+.tag.purple{color:#c4b5fd;border-color:rgba(139,92,246,.45)}
+.plan-card{padding:16px 18px}
+.plan-card h4,.block-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.plan-steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.plan-steps li{display:flex;gap:11px;align-items:flex-start;font-size:13px;color:var(--text2)}
+.plan-steps b{color:var(--text)}
+.step-n{flex:0 0 22px;height:22px;border-radius:6px;background:rgba(139,92,246,.18);color:#c4b5fd;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.action-card{border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.action-card summary{list-style:none;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel2);font-size:12px;color:var(--text2)}
+.action-card summary::-webkit-details-marker{display:none}
+.action-card summary:hover{background:var(--panel3)}
+.tool-badge{font-family:var(--mono);font-size:10.5px;background:rgba(96,165,250,.14);color:var(--blue);border:1px solid rgba(96,165,250,.35);border-radius:6px;padding:2px 8px}
+.ok-badge{font-size:10.5px;border-radius:6px;padding:2px 8px;font-weight:700}
+.ok-badge.ok{color:var(--green);background:rgba(52,211,153,.12)}
+.ok-badge.err{color:var(--red);background:rgba(248,113,113,.12)}
+.ok-badge.prop{color:var(--yellow);background:rgba(251,191,36,.12)}
+.action-body{padding:12px 14px;border-top:1px solid var(--border);background:var(--panel)}
+.action-body .thought{color:var(--text3);font-size:11px;margin-bottom:8px;font-style:italic}
+.action-body pre{background:#0a0b0f;border:1px solid var(--border);border-radius:8px;padding:10px;font-family:var(--mono);font-size:11px;overflow:auto;max-height:320px;white-space:pre-wrap;word-break:break-word}
+.verify-pass{border-color:rgba(52,211,153,.4)!important}
+.verify-fail{border-color:rgba(248,113,113,.4)!important}
+
+/* ── Context / files ────────────────────────────────────── */
+.context-wrap{display:flex;width:100%;height:100%;gap:14px;padding:14px}
+.file-panel{width:330px;min-width:280px;display:flex;flex-direction:column;padding:14px;gap:10px;overflow:hidden}
+.file-panel h2{font-size:15px}
+#semanticSearch,#fileFilter,#settingProjectPath,.txt-input{background:var(--panel2);border:1px solid var(--border2);color:var(--text);border-radius:9px;padding:9px 12px;font-size:12.5px;outline:none;width:100%}
+#semanticSearch:focus,#fileFilter:focus,.txt-input:focus{border-color:var(--accent)}
+.file-panel-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.search-results{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}
+.search-hit{border:1px solid var(--border);background:var(--panel2);border-radius:8px;padding:7px 9px;cursor:pointer;transition:.12s;text-align:left;color:var(--text2)}
+.search-hit:hover{border-color:var(--accent)}
+.search-hit .p{font-size:11px;color:#c4b5fd;font-family:var(--mono)}
+.search-hit .score{float:right;font-size:9.5px;color:var(--text3)}
+.search-hit pre{font-size:9.5px;color:var(--text3);margin-top:4px;white-space:pre-wrap;font-family:var(--mono)}
+.file-tree{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
+.file-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:7px;font-size:11.5px;color:var(--text2);background:transparent;border:none;text-align:left;width:100%;font-family:var(--mono)}
+.file-row:hover{background:var(--panel2);color:var(--text)}
+.file-row.active{background:rgba(139,92,246,.16);color:#d6c8ff}
+.file-row .sz{margin-left:auto;color:var(--text3);font-size:9.5px}
+.lang-dot{width:7px;height:7px;border-radius:2px;flex:0 0 7px}
+
+.viewer{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.viewer-path{font-family:var(--mono);font-size:12px;color:#c4b5fd}
+.viewer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.symbol-bar{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;border-bottom:1px solid var(--border);min-height:34px;align-items:center}
+.symbol-chip{flex:0 0 auto;font-family:var(--mono);font-size:10px;border:1px solid var(--border2);color:var(--text2);background:var(--panel2);border-radius:6px;padding:3px 8px}
+.symbol-chip i{color:var(--text3);font-style:normal}
+.symbol-chip.fn{border-color:rgba(96,165,250,.35)}
+.symbol-chip.cls{border-color:rgba(251,191,36,.35)}
+.file-viewer{flex:1;overflow:auto;font-family:var(--mono);font-size:11.5px;padding:6px 0}
+.viewer-empty{color:var(--text3);text-align:center;padding:60px 20px}
+.vline{display:flex;line-height:1.65}
+.vline .ln{flex:0 0 46px;text-align:right;padding-right:14px;color:var(--text3);user-select:none;cursor:pointer;border-right:1px solid var(--border)}
+.vline .lt{padding-left:14px;white-space:pre;color:#d5d5e0}
+.vline:hover .ln{color:var(--accent)}
+.vline.cursor-line{background:rgba(139,92,246,.12)}
+.vline.cursor-line .ln{color:#fff;font-weight:700}
+.vline.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,60%{background:rgba(251,191,36,.28)}100%{background:transparent}}
+.trunc-note{color:var(--yellow);font-size:11px;padding:8px 16px}
+
+/* ── Models ─────────────────────────────────────────────── */
+.models-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;max-width:1100px}
+.model-card{padding:18px;display:flex;flex-direction:column;gap:10px;position:relative}
+.model-card.is-default{border-color:rgba(139,92,246,.55);box-shadow:0 0 0 1px rgba(139,92,246,.35),var(--shadow)}
+.mc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mc-name{font-size:16px;font-weight:700}
+.status-pill{font-size:10px;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;font-weight:700;border:1px solid}
+.status-connected{color:var(--green);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.status-missing_key{color:var(--yellow);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.status-unreachable,.status-offline{color:var(--text3);border-color:var(--border2)}
+.mc-provider{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em}
+.mc-best{font-size:12px;color:var(--text2)}
+.mc-price{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.mc-stats{display:flex;gap:14px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);padding-top:10px;flex-wrap:wrap}
+.mc-stats b{color:var(--text);display:block;font-size:13px;font-variant-numeric:tabular-nums}
+.mc-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.default-badge{color:#c4b5fd;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── Credits ────────────────────────────────────────────── */
+.credits-grid{display:grid;grid-template-columns:360px 1fr;gap:16px;max-width:1100px}
+@media (max-width:1000px){.credits-grid{grid-template-columns:1fr}}
+.credit-hero{padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.ring-wrap{position:relative;width:190px;height:190px}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{stroke:#23242f}
+.ring-fg{stroke:url(#creditGrad);stroke-linecap:round;transition:stroke-dashoffset 1s ease}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-center .big{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ring-center .small{font-size:10px;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+.credit-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+.cstat{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:9px 6px}
+.cstat b{font-size:15px;display:block;font-variant-numeric:tabular-nums}
+.cstat span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+.credits-side{display:flex;flex-direction:column;gap:16px}
+.mini-card{padding:18px}
+.mini-card h3,.credits-grid h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+table.simple{width:100%;border-collapse:collapse;font-size:11.5px}
+table.simple th{text-align:left;color:var(--text3);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+table.simple td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text2)}
+table.simple tr:last-child td{border-bottom:none}
+.daily-bars{display:flex;align-items:flex-end;gap:4px;height:120px;padding-top:8px}
+.day-bar{flex:1;background:var(--accent-grad);border-radius:3px 3px 0 0;min-height:2px;opacity:.85;position:relative;transition:.15s}
+.day-bar:hover{opacity:1;filter:brightness(1.2)}
+.day-bar.zero{background:var(--panel3)}
+.day-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:6px}
+
+/* ── Settings ───────────────────────────────────────────── */
+.settings-grid{display:flex;flex-direction:column;gap:16px;max-width:820px}
+.setting-card{padding:20px 22px}
+.setting-card h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+.form-row{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.form-col{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px}
+label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
+.key-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.key-row .kname{flex:0 0 130px;font-size:12px;color:var(--text2)}
+.key-row input{flex:1;min-width:180px}
+.key-status{flex:0 0 auto;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.key-status.ok{color:var(--green)}
+.settings-foot{display:flex;align-items:center;gap:14px}
+
+/* ── Modal ──────────────────────────────────────────────── */
+.modal{position:fixed;inset:0;background:rgba(5,6,10,.66);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;animation:fade .18s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal-card{width:min(760px,94vw);max-height:84vh;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-size:14px}
+.modal-body{overflow:auto;padding:14px 18px;font-family:var(--mono);font-size:11px;white-space:pre-wrap;word-break:break-word;color:#d5d5e0}
+.modal-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 18px;border-top:1px solid var(--border)}
+.modal-symbol-row{padding:10px 18px 0;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border)}
+
+/* ── Toasts ─────────────────────────────────────────────── */
+#toasts{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:var(--panel2);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:11px 16px;border-radius:9px;font-size:12.5px;color:var(--text);box-shadow:var(--shadow);max-width:380px;animation:slidein .25s ease}
+.toast.error{border-left-color:var(--red)}
+.toast.ok{border-left-color:var(--green)}
+@keyframes slidein{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <img class="logo" src="/static/assets/jeet-logo.png" alt="Jeet">
+  <div class="brand"><b>Jeet<i>&nbsp;AI</i></b><span>Private AI Assistant</span></div>
+  <div class="topbar-right">
+    <span id="offlineBadge" class="badge offline hidden">◆ Offline mode</span>
+    <button class="pill" id="creditPill" title="Open credits dashboard"><span class="dot"></span><span><b id="creditPillText">…</b> credits left</span></button>
+  </div>
+</header>
+<div id="lowCreditBanner" class="low-credit hidden">⚠ <span id="lowCreditText"></span> — switch to the Ollama (local) or Demo model to keep coding for free, or raise the budget in Settings.</div>
+
+<main class="shell">
+  <nav class="sidebar">
+    <button class="nav-btn active" data-view="chat" title="Chat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Chat</span></button>
+    <button class="nav-btn" data-view="agent" title="Junie Agent"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></svg><span>Agent</span></button>
+    <button class="nav-btn" data-view="context" title="Context & Files"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Files</span></button>
+    <button class="nav-btn" data-view="models" title="Models"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M8 7.8l2.6 7.4M16 7.8l-2.6 7.4M8.4 6h7.2"/></svg><span>Models</span></button>
+    <button class="nav-btn" data-view="credits" title="Credits"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg><span>Credits</span></button>
+    <button class="nav-btn" data-view="settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></button>
+  </nav>
+
+  <section class="views">
+
+    <!-- ══ CHAT ══ -->
+    <div id="view-chat" class="view active">
+      <div class="chat-wrap">
+        <aside class="sessions">
+          <button id="newChatBtn" class="btn-primary block">+ New chat</button>
+          <div id="sessionList" class="session-list"></div>
+        </aside>
+        <div class="chat-main">
+          <div id="messages" class="messages"></div>
+          <div class="composer card">
+            <div id="openTabs" class="open-tabs"></div>
+            <textarea id="chatInput" rows="2" placeholder="Ask Jeet anything about your code…   (Ctrl+Enter to send)"></textarea>
+            <div class="composer-bar">
+              <div class="composer-left">
+                <select id="chatModel" class="select model-select" title="Model"></select>
+                <button id="toggleContext" class="chip-toggle active" title="Inject TF-IDF semantic-search snippets from your project">⬡ Project context</button>
+                <button id="toggleOpenTabs" class="chip-toggle active" title="Attach open files (with cursor line)">▭ Open files</button>
+              </div>
+              <div class="composer-right">
+                <span id="sendHint" class="hint"></span>
+                <button id="sendBtn" class="btn-primary">Send →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AGENT ══ -->
+    <div id="view-agent" class="view">
+      <div class="panel">
+        <div class="agent-box">
+          <h1><span class="spark">⚡</span>Junie Agent</h1>
+          <p class="sub">Autonomous coding loop: <b>Plan → Execute → Verify → Refine</b>. The agent is sandboxed to your project root, writes only inside it, and runs commands from a strict allowlist (<code>pytest</code>, <code>python</code>, <code>npm test</code>…) without a shell. Turn off <b>Auto-apply</b> to preview every change before it touches disk.</p>
+          <textarea id="agentTask" rows="3" placeholder="Describe the task… e.g. “Add a healthz endpoint with a test” or “Write pytest tests for src/models/demo.py”"></textarea>
+          <div class="agent-options">
+            <select id="agentModel" class="select model-select"></select>
+            <label class="switch"><input type="checkbox" id="autoApply" checked><span>Auto-apply changes (write files &amp; run allowlisted commands)</span></label>
+            <button id="agentRunBtn" class="btn-primary big">▶ Run agent</button>
+          </div>
+          <div id="agentStatus" class="agent-status hidden"><div class="spinner"></div><span id="agentStatusText">Working…</span></div>
+          <div id="agentResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CONTEXT / FILES ══ -->
+    <div id="view-context" class="view">
+      <div class="context-wrap">
+        <aside class="file-panel card">
+          <h2>Project context</h2>
+          <input id="semanticSearch" placeholder="Semantic search — e.g. ‘credit deduction logic’…" autocomplete="off">
+          <div class="file-panel-actions">
+            <span id="indexStatus" class="hint">Index: …</span>
+            <button id="reindexBtn" class="btn-ghost small">↻ Reindex</button>
+          </div>
+          <div id="searchResults" class="search-results"></div>
+          <input id="fileFilter" placeholder="Filter files…" autocomplete="off">
+          <div id="fileTree" class="file-tree"></div>
+        </aside>
+        <div class="viewer card">
+          <div class="viewer-head">
+            <div><span id="viewerPath" class="viewer-path">No file open</span><br><span id="viewerMeta" class="hint"></span></div>
+            <div class="viewer-actions">
+              <button id="completeBtn" class="btn-ghost small" disabled>✨ Complete @ cursor</button>
+              <button id="testsBtn" class="btn-ghost small" disabled>🧪 Generate tests</button>
+              <button id="docstringBtn" class="btn-ghost small" disabled>📝 Add docstring</button>
+            </div>
+          </div>
+          <div id="symbolBar" class="symbol-bar"></div>
+          <div id="fileViewer" class="file-viewer"><div class="viewer-empty">Open a file on the left — symbols appear above, click any line to set the AI cursor.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODELS ══ -->
+    <div id="view-models" class="view">
+      <div class="panel">
+        <h1>Models</h1>
+        <p class="sub">Switch models per conversation. Cloud models are metered in credits (1 credit = $1); Ollama and the Demo brain are always free. Keys are stored in <code>config.local.yaml</code> (gitignored).</p>
+        <div id="modelCards" class="models-grid"></div>
+      </div>
+    </div>
+
+    <!-- ══ CREDITS ══ -->
+    <div id="view-credits" class="view">
+      <div class="panel">
+        <h1>Credits</h1>
+        <p class="sub">AI Ultimate simulation — <b>35 credits/month</b>, 1 credit = $1. Local models never burn credits.</p>
+        <div class="credits-grid">
+          <div class="card credit-hero">
+            <div class="ring-wrap">
+              <svg width="190" height="190" viewBox="0 0 190 190">
+                <defs><linearGradient id="creditGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="55%" stop-color="#6366f1"/><stop offset="100%" stop-color="#ff4fa3"/></linearGradient></defs>
+                <circle class="ring-bg" cx="95" cy="95" r="80" stroke-width="16" fill="none"/>
+                <circle id="ringFg" class="ring-fg" cx="95" cy="95" r="80" stroke-width="16" fill="none" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+              </svg>
+              <div class="ring-center"><div class="big" id="creditsLeft">–</div><div class="small">credits left</div></div>
+            </div>
+            <div id="creditWarn" class="warn hidden">Low credits — under your warning threshold. Consider the free Demo/Ollama models or raise the monthly budget in Settings.</div>
+            <div class="credit-stats">
+              <div class="cstat"><b id="statUsed">–</b><span>Used</span></div>
+              <div class="cstat"><b id="statCalls">–</b><span>Calls</span></div>
+              <div class="cstat"><b id="statTokens">–</b><span>Tokens</span></div>
+              <div class="cstat"><b id="statLatency">–</b><span>Avg ms</span></div>
+            </div>
+          </div>
+          <div class="credits-side">
+            <div class="card mini-card"><h3>Spend by model — this month</h3><table class="simple"><thead><tr><th>Model</th><th>Calls</th><th>Tokens</th><th>Cost</th><th>Avg ms</th></tr></thead><tbody id="byModelTable"></tbody></table></div>
+            <div class="card mini-card"><h3>Daily spend — last 30 days</h3><div id="dailyBars" class="daily-bars"></div><div id="dailyLabels" class="day-labels"></div></div>
+            <div class="card mini-card"><h3>Recent activity</h3><table class="simple"><thead><tr><th>Time</th><th>Model</th><th>Kind</th><th>Tokens</th><th>Cost</th><th>ms</th></tr></thead><tbody id="recentTable"></tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div id="view-settings" class="view">
+      <div class="panel">
+        <h1>Settings</h1>
+        <p class="sub">Everything is stored locally. Secrets go to <code id="localConfigPath">config.local.yaml</code> — never committed.</p>
+        <div class="settings-grid">
+          <div class="card setting-card">
+            <h3>Project &amp; engine</h3>
+            <div class="form-row">
+              <div class="form-col" style="flex:2"><label class="flabel" for="settingProjectPath">Project root (context, agent sandbox)</label><input id="settingProjectPath" class="txt-input" spellcheck="false"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-col"><label class="flabel" for="settingDefaultModel">Default model</label><select id="settingDefaultModel" class="select"></select></div>
+              <div class="form-col" style="justify-content:flex-end"><label class="switch"><input type="checkbox" id="settingOfflineMode"><span>Offline mode — force all cloud requests onto local Ollama</span></label></div>
+            </div>
+            <div class="form-row">
+              <div class="form-col"><label class="flabel" for="settingOllamaUrl">Ollama base URL</label><input id="settingOllamaUrl" class="txt-input" spellcheck="false"></div>
+              <div class="form-col"><label class="flabel" for="settingOllamaModel">Ollama model</label><input id="settingOllamaModel" class="txt-input" spellcheck="false"></div>
+            </div>
+          </div>
+          <div class="card setting-card">
+            <h3>API keys <span style="text-transform:none;letter-spacing:0;color:var(--text3)">(leave blank to keep existing, type “clear” to wipe)</span></h3>
+            <div class="key-row"><span class="kname">OpenAI</span><input id="keyOpenai" type="password" class="txt-input" placeholder="sk-…" autocomplete="off"><span class="key-status" id="keyStatusOpenai">…</span></div>
+            <div class="key-row"><span class="kname">Anthropic</span><input id="keyAnthropic" type="password" class="txt-input" placeholder="sk-ant-…" autocomplete="off"><span class="key-status" id="keyStatusAnthropic">…</span></div>
+            <div class="key-row"><span class="kname">Google (Gemini)</span><input id="keyGoogle" type="password" class="txt-input" placeholder="AIza…" autocomplete="off"><span class="key-status" id="keyStatusGoogle">…</span></div>
+            <p class="hint">Env vars <code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code> / <code>GOOGLE_API_KEY</code> also work and are never written to disk.</p>
+          </div>
+          <div class="card setting-card">
+            <h3>Credit budget</h3>
+            <div class="form-row">
+              <div class="form-col"><label class="flabel" for="settingBudget">Monthly credits (1 credit = $1)</label><input id="settingBudget" type="number" min="0" step="0.5" class="txt-input"></div>
+              <div class="form-col"><label class="flabel" for="settingThreshold">Warn when remaining ≤</label><input id="settingThreshold" type="number" min="0" step="0.5" class="txt-input"></div>
+            </div>
+          </div>
+          <div class="settings-foot">
+            <button id="saveSettingsBtn" class="btn-primary big">Save settings</button>
+            <span id="settingsSavedHint" class="hint"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<!-- ══ Modal ══ -->
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modalTitle">Result</h3><button id="modalClose" class="icon-btn" aria-label="Close">✕</button></div>
+    <div id="modalSymbolRow" class="modal-symbol-row hidden"><label class="flabel" for="modalSymbolSelect">Function</label><select id="modalSymbolSelect" class="select"></select></div>
+    <pre id="modalBody" class="modal-body"></pre>
+    <div class="modal-foot">
+      <span id="modalMeta" class="hint"></span>
+      <button id="modalCopyBtn" class="btn-ghost">Copy</button>
+      <button id="modalSaveBtn" class="btn-primary hidden">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   Jeet — Private AI Assistant · frontend logic
+   ════════════════════════════════════════════════════════════ */
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const state = {
+  view: 'chat', sessionId: null, models: [], defaultModel: 'demo', offlineMode: false,
+  openTabs: [], cursor: {}, activeFile: null, fileSymbols: [], currentFile: null,
+  contextOn: true, openTabsOn: true, sending: false, modal: null, settings: null,
+};
+
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmtNum = n => Number(n || 0).toLocaleString();
+const fmtCost = c => (c && c > 0) ? (Number(c).toFixed(4) + ' cr') : 'free';
+const fmtMs = ms => ms >= 1000 ? (ms/1000).toFixed(1) + ' s' : Math.round(ms || 0) + ' ms';
+const truncMid = (s, n) => s.length <= n ? s : s.slice(0, n - 1) + '…';
+
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts));
+  let data = null;
+  try { data = await res.json(); } catch (_) { data = {}; }
+  if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+  return data;
+}
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type; el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4200);
+}
+
+/* ── tiny markdown renderer ─────────────────────────────── */
+function mdToHtml(src) {
+  const codeBlocks = [];
+  let text = String(src ?? '').replace(/```([\w-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    codeBlocks.push('<pre class="code"><code>' + esc(code.replace(/\n+$/, '')) + '</code></pre>');
+    return '\u0000CB' + (codeBlocks.length - 1) + '\u0000';
+  });
+  text = esc(text);
+  text = text.replace(/`([^`\n]+)`/g, '<code class="inline">$1</code>');
+  text = text.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/(^|\W)\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  const lines = text.split('\n');
+  const out = []; let listType = null;
+  const closeList = () => { if (listType) { out.push('</' + listType + '>'); listType = null; } };
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (/^\u0000CB\d+\u0000$/.test(line.trim())) { closeList(); out.push(line.trim()); continue; }
+    const h = line.match(/^(#{1,4})\s+(.*)$/);
+    if (h) { closeList(); const n = Math.min(h[1].length + 1, 5); out.push(`<h${n}>${h[2]}</h${n}>`); continue; }
+    if (/^&gt;\s?/.test(line)) { closeList(); out.push('<blockquote>' + line.replace(/^&gt;\s?/, '') + '</blockquote>'); continue; }
+    const ul = line.match(/^\s*[-*]\s+(.*)$/);
+    if (ul) { if (listType !== 'ul') { closeList(); out.push('<ul>'); listType = 'ul'; } out.push('<li>' + ul[1] + '</li>'); continue; }
+    const ol = line.match(/^\s*\d+\.\s+(.*)$/);
+    if (ol) { if (listType !== 'ol') { closeList(); out.push('<ol>'); listType = 'ol'; } out.push('<li>' + ol[1] + '</li>'); continue; }
+    if (!line.trim()) { closeList(); continue; }
+    closeList(); out.push('<p>' + line + '</p>');
+  }
+  closeList();
+  return out.join('\n').replace(/\u0000CB(\d+)\u0000/g, (_, i) => codeBlocks[+i]);
+}
+
+/* ── navigation ─────────────────────────────────────────── */
+function switchView(name) {
+  state.view = name;
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  if (name === 'credits') refreshCreditsPage();
+  if (name === 'models') renderModelCards();
+  if (name === 'context') loadFilesAndIndex();
+  if (name === 'settings') loadSettings();
+}
+$$('.nav-btn').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+$('#creditPill').addEventListener('click', () => switchView('credits'));
+
+/* ── models ─────────────────────────────────────────────── */
+function modelLabel(key) { const m = state.models.find(m => m.key === key); return m ? m.label : key; }
+async function loadModels() {
+  const data = await api('/models');
+  state.models = data.models; state.defaultModel = data.default_model; state.offlineMode = data.offline_mode;
+  $('#offlineBadge').classList.toggle('hidden', !state.offlineMode);
+  for (const selId of ['#chatModel', '#agentModel', '#settingDefaultModel']) {
+    const sel = $(selId); const cur = sel.value || state.defaultModel;
+    sel.innerHTML = state.models.map(m => {
+      const suffix = m.free ? ' · free' : (m.status !== 'connected' ? ' · ⚠' : '');
+      return `<option value="${esc(m.key)}">${esc(m.label)}${suffix}</option>`;
+    }).join('');
+    sel.value = state.models.some(m => m.key === cur) ? cur : state.defaultModel;
+  }
+}
+
+/* ── credits ────────────────────────────────────────────── */
+async function refreshCredits() {
+  try {
+    const s = await api('/credits');
+    $('#creditPillText').textContent = s.remaining.toFixed(2);
+    $('#creditPill').classList.toggle('low', !!s.low_credits);
+    $('#lowCreditBanner').classList.toggle('hidden', !s.low_credits);
+    $('#lowCreditText').textContent = `Only ${s.remaining.toFixed(2)} of ${s.budget} credits remain this month`;
+    return s;
+  } catch (e) { console.error(e); return null; }
+}
+
+async function refreshCreditsPage() {
+  const s = await refreshCredits(); if (!s) return;
+  const C = 2 * Math.PI * 80;
+  const frac = s.budget > 0 ? Math.min(s.remaining / s.budget, 1) : 0;
+  $('#ringFg').style.strokeDasharray = C;
+  $('#ringFg').style.strokeDashoffset = String(C * (1 - frac));
+  $('#creditsLeft').textContent = s.remaining.toFixed(2);
+  $('#creditWarn').classList.toggle('hidden', !s.low_credits);
+  $('#statUsed').textContent = s.used.toFixed(2);
+  $('#statCalls').textContent = fmtNum(s.calls);
+  $('#statTokens').textContent = fmtNum(s.tokens);
+  $('#statLatency').textContent = fmtNum(s.avg_latency_ms);
+
+  $('#byModelTable').innerHTML = s.by_model.length
+    ? s.by_model.map(r => `<tr><td>${esc(r.model)}</td><td>${fmtNum(r.calls)}</td><td>${fmtNum(r.tokens)}</td><td>${fmtCost(r.cost)}</td><td>${fmtNum(Math.round(r.avg_latency||0))}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="hint">No usage yet this month — send a message!</td></tr>';
+
+  // last 30 days bars
+  const days = [];
+  for (let i = 29; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d.toISOString().slice(0, 10)); }
+  const byDay = Object.fromEntries((s.daily || []).map(r => [r.day, r.cost]));
+  const max = Math.max(0.001, ...days.map(d => byDay[d] || 0));
+  $('#dailyBars').innerHTML = days.map(d => {
+    const v = byDay[d] || 0; const h = Math.max(2, Math.round(v / max * 100));
+    return `<div class="day-bar${v ? '' : ' zero'}" style="height:${h}%" title="${d}: ${v.toFixed(4)} cr"></div>`;
+  }).join('');
+  $('#dailyLabels').innerHTML = `<span>${days[0].slice(5)}</span><span>${days[10].slice(5)}</span><span>${days[20].slice(5)}</span><span>${days[29].slice(5)}</span>`;
+
+  $('#recentTable').innerHTML = s.recent.length
+    ? s.recent.map(r => `<tr><td>${esc(String(r.ts).slice(5, 16).replace('T', ' '))}</td><td>${esc(r.model)}</td><td>${esc(r.kind)}</td><td>${fmtNum(r.prompt_tokens + r.completion_tokens)}</td><td>${fmtCost(r.cost)}</td><td>${fmtNum(r.latency_ms)}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="hint">Nothing yet.</td></tr>';
+}
+
+/* ── sessions & chat ────────────────────────────────────── */
+function emptyState() {
+  $('#messages').innerHTML = `
+    <div class="empty-state">
+      <img src="/static/assets/jeet-logo.png" alt="Jeet">
+      <h2>How can I help with your code?</h2>
+      <p>Project context and open files are injected automatically — ask about anything in this repo.</p>
+      <div class="suggestions">
+        <button class="suggestion" data-q="Explain the architecture of this project">Explain this project</button>
+        <button class="suggestion" data-q="Generate pytest tests for src/models/demo.py">Generate tests</button>
+        <button class="suggestion" data-q="Find potential bugs and code smells in the codebase">Find bugs & smells</button>
+        <button class="suggestion" data-q="Summarize what changed recently and what to do next">What should I do next?</button>
+      </div>
+    </div>`;
+  $$('.suggestion', $('#messages')).forEach(b => b.addEventListener('click', () => { $('#chatInput').value = b.dataset.q; $('#chatInput').focus(); }));
+}
+
+function appendUser(text) {
+  const el = document.createElement('div');
+  el.className = 'bubble user'; el.innerHTML = `<div class="body">${mdToHtml(text)}</div>`;
+  $('#messages').appendChild(el); scrollMessages();
+}
+function appendAssistant(m) {
+  const el = document.createElement('div');
+  el.className = 'bubble assistant';
+  const meta = `<div class="msg-meta"><span><b>${esc(m.model_label || m.model || 'model')}</b></span><span>${fmtNum(m.total_tokens)} tok</span><span>${fmtCost(m.cost)}</span><span>${fmtMs(m.latency_ms)}</span></div>`;
+  const notice = m.notice ? `<div class="msg-notice">${esc(m.notice)}</div>` : '';
+  el.innerHTML = `<div class="body">${mdToHtml(m.content)}</div>${notice}${meta}`;
+  $('#messages').appendChild(el); scrollMessages();
+}
+function appendError(msg) {
+  const el = document.createElement('div');
+  el.className = 'bubble assistant error'; el.innerHTML = `<div class="body">⚠ ${esc(msg)}</div>`;
+  $('#messages').appendChild(el); scrollMessages();
+}
+function appendTyping() {
+  const el = document.createElement('div');
+  el.className = 'typing'; el.innerHTML = '<i></i><i></i>';
+  $('#messages').appendChild(el); scrollMessages(); return el;
+}
+function scrollMessages() { const m = $('#messages'); m.scrollTop = m.scrollHeight; }
+
+async function loadSessions() {
+  try {
+    const data = await api('/sessions');
+    $('#sessionList').innerHTML = data.sessions.map(s => `
+      <button class="session-item${s.id === state.sessionId ? ' active' : ''}" data-id="${esc(s.id)}">
+        <span class="del" data-del="${esc(s.id)}" title="Delete conversation">✕</span>
+        <div class="t">${esc(truncMid(s.title, 46))}</div>
+        <div class="m">${esc(modelLabel(s.model))} · ${s.message_count} msgs</div>
+      </button>`).join('') || '<div class="hint" style="padding:8px">No conversations yet.</div>';
+  } catch (e) { console.error(e); }
+}
+$('#sessionList').addEventListener('click', async e => {
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    e.stopPropagation();
+    await api('/sessions/' + del.dataset.del, { method: 'DELETE' });
+    if (state.sessionId === del.dataset.del) { state.sessionId = null; emptyState(); }
+    loadSessions(); return;
+  }
+  const item = e.target.closest('.session-item'); if (!item) return;
+  state.sessionId = item.dataset.id;
+  try {
+    const data = await api('/sessions/' + state.sessionId + '/messages');
+    $('#messages').innerHTML = '';
+    for (const m of data.messages) (m.role === 'user' ? appendUser : appendAssistant)(m.role === 'user' ? m.content : m);
+    if (!data.messages.length) emptyState();
+  } catch (err) { toast(err.message, 'error'); }
+  loadSessions();
+});
+$('#newChatBtn').addEventListener('click', () => { state.sessionId = null; emptyState(); loadSessions(); });
+
+$('#toggleContext').addEventListener('click', () => { state.contextOn = !state.contextOn; $('#toggleContext').classList.toggle('active', state.contextOn); });
+$('#toggleOpenTabs').addEventListener('click', () => { state.openTabsOn = !state.openTabsOn; $('#toggleOpenTabs').classList.toggle('active', state.openTabsOn); });
+
+async function sendMessage() {
+  const input = $('#chatInput'); const text = input.value.trim();
+  if (!text || state.sending) return;
+  state.sending = true; $('#sendBtn').disabled = true;
+  const empty = $('.empty-state'); if (empty) empty.remove();
+  appendUser(text); input.value = ''; input.style.height = 'auto';
+  const typing = appendTyping();
+  try {
+    const res = await api('/chat', { method: 'POST', body: JSON.stringify({
+      session_id: state.sessionId, model: $('#chatModel').value, message: text,
+      include_context: state.contextOn, include_open_files: state.openTabsOn,
+      open_files: state.openTabs.slice(0, 4).map(t => ({ path: t.path, line: state.cursor[t.path] || null })),
+    }) });
+    state.sessionId = res.session_id;
+    typing.remove(); appendAssistant(res.message);
+    if (res.credits) { refreshCredits(); if (res.credits.low_credits) toast('Credits are running low', 'error'); }
+    loadSessions();
+  } catch (e) { typing.remove(); appendError(e.message); }
+  finally { state.sending = false; $('#sendBtn').disabled = false; }
+}
+$('#sendBtn').addEventListener('click', sendMessage);
+$('#chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendMessage(); }
+});
+$('#chatInput').addEventListener('input', function () { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 180) + 'px'; });
+
+/* ── open tabs / PSI cursor ────────────────────────────── */
+function setTab(path, line) {
+  if (line != null) state.cursor[path] = line;
+  renderTabChips();
+}
+function ensureTab(path) { if (!state.openTabs.find(t => t.path === path)) state.openTabs.push({ path }); renderTabChips(); }
+function closeTab(path) {
+  state.openTabs = state.openTabs.filter(t => t.path !== path); delete state.cursor[path];
+  renderTabChips();
+  if (state.activeFile === path) { state.activeFile = null; state.currentFile = null; $('#fileViewer').innerHTML = '<div class="viewer-empty">File closed.</div>'; $('#viewerPath').textContent = 'No file open'; $('#viewerMeta').textContent = ''; $('#symbolBar').innerHTML = ''; $('#completeBtn').disabled = $('#testsBtn').disabled = $('#docstringBtn').disabled = true; }
+  highlightActiveFileRow();
+}
+function renderTabChips() {
+  $('#openTabs').innerHTML = state.openTabs.map(t => {
+    const line = state.cursor[t.path];
+    const name = t.path.split('/').pop();
+    return `<span class="tab-chip" data-path="${esc(t.path)}" title="${esc(t.path)}"><b>${esc(name)}</b>${line ? `<span class="ln">L${line}</span>` : ''}<button data-close="${esc(t.path)}" aria-label="Close">✕</button></span>`;
+  }).join('');
+}
+$('#openTabs').addEventListener('click', e => {
+  const close = e.target.closest('[data-close]'); if (close) { closeTab(close.dataset.close); return; }
+  const chip = e.target.closest('.tab-chip'); if (!chip) return;
+  const path = chip.dataset.path;
+  if (path) { switchView('context'); openFile(path); }
+});
+
+/* ── context: files, tree, viewer ──────────────────────── */
+const LANG_COLORS = { python:'#4b8bbe', javascript:'#f0db4f', typescript:'#3178c6', markdown:'#9aa0a6', json:'#8b5cf6', yaml:'#cb3837', html:'#e44d26', css:'#8a4baf', shell:'#89e051', sql:'#e38c00', go:'#00add8', rust:'#f74c00', java:'#b07219' };
+async function loadFilesAndIndex() {
+  try {
+    const [files, status] = await Promise.all([api('/context/files'), api('/context/status')]);
+    state.fileList = files.files || [];
+    $('#indexStatus').textContent = status.indexed ? `Index: ${status.doc_count} files · ${status.built_at || ''}` : 'Index: not built';
+    renderFileTree($('#fileFilter').value || '');
+  } catch (e) { toast('Failed to scan project: ' + e.message, 'error'); }
+}
+function renderFileTree(filter) {
+  const q = (filter || '').toLowerCase();
+  const rows = (state.fileList || []).filter(f => !q || f.path.toLowerCase().includes(q)).slice(0, 900);
+  $('#fileTree').innerHTML = rows.map(f => {
+    const depth = Math.min(f.path.split('/').length - 1, 6);
+    const color = LANG_COLORS[f.language] || '#6f7080';
+    return `<button class="file-row${f.path === state.activeFile ? ' active' : ''}" data-path="${esc(f.path)}" style="padding-left:${8 + depth * 14}px"><span class="lang-dot" style="background:${color}"></span>${esc(f.path)}<span class="sz">${(f.size / 1024).toFixed(1)}K</span></button>`;
+  }).join('') || '<div class="hint" style="padding:10px">No files match.</div>';
+}
+$('#fileFilter').addEventListener('input', e => renderFileTree(e.target.value));
+$('#fileTree').addEventListener('click', e => { const row = e.target.closest('.file-row'); if (row) openFile(row.dataset.path); });
+function highlightActiveFileRow() { $$('.file-row').forEach(r => r.classList.toggle('active', r.dataset.path === state.activeFile)); }
+
+let searchTimer = null;
+$('#semanticSearch').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  if (q.length < 3) { $('#searchResults').innerHTML = ''; return; }
+  searchTimer = setTimeout(() => runSemanticSearch(q), 320);
+});
+async function runSemanticSearch(q) {
+  try {
+    const data = await api('/context/search?q=' + encodeURIComponent(q));
+    $('#searchResults').innerHTML = data.results.map(r => `
+      <button class="search-hit" data-path="${esc(r.path)}"><span class="score">score ${r.score}</span><span class="p">${esc(r.path)}</span><pre>${r.snippet.map(s => 'L' + s.n + '  ' + s.text).join('\n')}</pre></button>`).join('') || '<div class="hint">No hits — try Reindex.</div>';
+  } catch (e) { toast(e.message, 'error'); }
+}
+$('#searchResults').addEventListener('click', e => { const hit = e.target.closest('.search-hit'); if (hit) openFile(hit.dataset.path); });
+$('#reindexBtn').addEventListener('click', async () => {
+  const btn = $('#reindexBtn'); btn.disabled = true; btn.textContent = 'Indexing…';
+  try { const r = await api('/context/reindex', { method: 'POST' }); toast(`Indexed ${r.doc_count} files in ${r.build_seconds}s`, 'ok'); loadFilesAndIndex(); }
+  catch (e) { toast('Reindex failed: ' + e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '↻ Reindex'; }
+});
+
+function renderSymbols(symbols) {
+  $('#symbolBar').innerHTML = symbols.length
+    ? symbols.slice(0, 120).map(s => `<button class="symbol-chip ${s.kind === 'class' ? 'cls' : 'fn'}" data-line="${s.line}" title="${esc(s.kind)} · line ${s.line}">${esc(s.name)} <i>:${s.line}</i></button>`).join('')
+    : '<span class="hint">No symbols detected.</span>';
+}
+$('#symbolBar').addEventListener('click', e => {
+  const chip = e.target.closest('.symbol-chip'); if (!chip) return;
+  scrollToLine(+chip.dataset.line);
+});
+function scrollToLine(n) {
+  const row = $(`.vline[data-line="${n}"]`); if (!row) return;
+  row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
+}
+
+async function openFile(path, line) {
+  try {
+    const data = await api('/context/file?path=' + encodeURIComponent(path) + (line ? '&start=' + Math.max(1, line - 10) + '&end=' + (line + 60) : ''));
+    state.activeFile = path; state.currentFile = data; state.fileSymbols = data.symbols || [];
+    ensureTab(path); highlightActiveFileRow();
+    $('#viewerPath').textContent = data.path;
+    $('#viewerMeta').textContent = `${data.language} · ${data.total_lines} lines · ${state.fileSymbols.length} symbols`;
+    renderSymbols(state.fileSymbols);
+    let html = data.lines.map(l => `<div class="vline" data-line="${l.n}"><span class="ln">${l.n}</span><span class="lt">${esc(l.text) || ' '}</span></div>`).join('');
+    if (data.truncated) html += `<div class="trunc-note">Showing lines ${data.start}–${data.end} of ${data.total_lines}.</div>`;
+    $('#fileViewer').innerHTML = html;
+    $('#completeBtn').disabled = $('#testsBtn').disabled = $('#docstringBtn').disabled = false;
+    const cur = state.cursor[path]; if (cur) { const row = $(`.vline[data-line="${cur}"]`); if (row) row.classList.add('cursor-line'); }
+    if (line) scrollToLine(line);
+  } catch (e) { toast(e.message, 'error'); }
+}
+$('#fileViewer').addEventListener('click', e => {
+  const ln = e.target.closest('.ln'); if (!ln) return;
+  const row = ln.closest('.vline'); const n = +row.dataset.line;
+  $$('.vline.cursor-line', $('#fileViewer')).forEach(r => r.classList.remove('cursor-line'));
+  row.classList.add('cursor-line');
+  state.cursor[state.activeFile] = n;
+  renderTabChips();
+});
+
+/* ── modal ──────────────────────────────────────────────── */
+function openModal({ title, body, meta, symbolSelect, saveLabel, onSave }) {
+  state.modal = { onSave };
+  $('#modalTitle').textContent = title;
+  $('#modalBody').textContent = body;
+  $('#modalMeta').textContent = meta || '';
+  const row = $('#modalSymbolRow');
+  if (symbolSelect && symbolSelect.length) {
+    row.classList.remove('hidden');
+    $('#modalSymbolSelect').innerHTML = symbolSelect.map(s => `<option value="${esc(s.name || '')}">${esc(s.name || s)}</option>`).join('');
+  } else row.classList.add('hidden');
+  const saveBtn = $('#modalSaveBtn');
+  if (saveLabel) { saveBtn.classList.remove('hidden'); saveBtn.textContent = saveLabel; } else saveBtn.classList.add('hidden');
+  $('#modal').classList.remove('hidden');
+}
+function closeModal() { $('#modal').classList.add('hidden'); state.modal = null; }
+$('#modalClose').addEventListener('click', closeModal);
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+$('#modalCopyBtn').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#modalBody').textContent); toast('Copied to clipboard', 'ok'); } catch (_) { toast('Copy failed', 'error'); } });
+$('#modalSaveBtn').addEventListener('click', async () => { if (state.modal && state.modal.onSave) { const btn = $('#modalSaveBtn'); btn.disabled = true; try { await state.modal.onSave($('#modalSymbolSelect').value); } finally { btn.disabled = false; } } });
+
+$('#testsBtn').addEventListener('click', () => {
+  const file = state.activeFile; if (!file) return;
+  const fns = state.fileSymbols.filter(s => s.kind === 'function').map(s => s.name);
+  const fn = fns[0];
+  openModal({ title: 'Generating tests…', body: 'Running model…', symbolSelect: fns, saveLabel: null, onSave: null });
+  api('/generate-tests', { method: 'POST', body: JSON.stringify({ file_path: file, function_name: fn, model: $('#chatModel').value }) })
+    .then(res => {
+      openModal({ title: 'Generated tests — ' + res.function, body: res.code,
+        meta: `${fmtCost(res.cost)} · ${fmtMs(res.latency_ms)} · ${res.model}`,
+        symbolSelect: fns, saveLabel: 'Save to tests/',
+        onSave: async (name) => { await api('/generate-tests', { method: 'POST', body: JSON.stringify({ file_path: file, function_name: name, model: $('#chatModel').value, save: true }) }).then(r => { toast('Tests saved to ' + r.saved_path, 'ok'); closeModal(); refreshCredits(); }); } });
+      refreshCredits();
+    })
+    .catch(e => { closeModal(); toast(e.message, 'error'); });
+});
+
+$('#docstringBtn').addEventListener('click', () => {
+  const file = state.activeFile; if (!file) return;
+  const fns = state.fileSymbols.filter(s => s.kind === 'function').map(s => s.name);
+  const fn = fns[0];
+  openModal({ title: 'Generating docstring…', body: 'Running model…', symbolSelect: fns, saveLabel: null, onSave: null });
+  api('/generate-docstring', { method: 'POST', body: JSON.stringify({ file_path: file, symbol: fn, model: $('#chatModel').value }) })
+    .then(res => {
+      openModal({ title: 'Docstring — ' + res.function, body: res.docstring,
+        meta: `${fmtCost(res.cost)} · ${fmtMs(res.latency_ms)} · ${res.model}`,
+        symbolSelect: fns, saveLabel: 'Insert into file',
+        onSave: async (name) => { await api('/generate-docstring', { method: 'POST', body: JSON.stringify({ file_path: file, symbol: name, model: $('#chatModel').value, save: true }) }).then(r => { toast('Docstring inserted into ' + file, 'ok'); closeModal(); openFile(file); }); } });
+      refreshCredits();
+    })
+    .catch(e => { closeModal(); toast(e.message, 'error'); });
+});
+
+$('#completeBtn').addEventListener('click', () => {
+  const file = state.activeFile; if (!file) return;
+  const line = state.cursor[file] || state.currentFile?.total_lines || 1;
+  openModal({ title: `Completion @ ${file.split('/').pop()}:${line}`, body: 'Running model…', saveLabel: null, onSave: null });
+  api('/completion', { method: 'POST', body: JSON.stringify({ file_path: file, line, model: $('#chatModel').value }) })
+    .then(res => { $('#modalBody').textContent = res.completion; $('#modalMeta').textContent = `${fmtCost(res.cost)} · ${fmtMs(res.latency_ms)} · ${res.model}`; refreshCredits(); })
+    .catch(e => { closeModal(); toast(e.message, 'error'); });
+});
+
+/* ── agent ──────────────────────────────────────────────── */
+const actionHtml = a => {
+  const badge = a.proposed ? '<span class="ok-badge prop">PROPOSED</span>' : (a.ok ? '<span class="ok-badge ok">OK</span>' : '<span class="ok-badge err">FAILED</span>');
+  const argsStr = typeof a.args === 'string' ? a.args : JSON.stringify(a.args, null, 2);
+  const out = typeof a.output === 'string' ? a.output : JSON.stringify(a.output, null, 2);
+  return `<details class="action-card"><summary><span class="step-n">${a.iteration}</span><span class="tool-badge">${esc(a.tool)}</span>${badge}<span style="margin-left:auto" class="hint">${esc(truncMid((argsStr || '').split('\n')[0], 80))}</span></summary><div class="action-body">${a.thought ? `<div class="thought">${esc(a.thought)}</div>` : ''}<pre>${esc(out || '')}</pre></div></details>`;
+};
+
+$('#agentRunBtn').addEventListener('click', async () => {
+  const task = $('#agentTask').value.trim(); if (!task || state.sending) return;
+  state.sending = true;
+  $('#agentRunBtn').disabled = true;
+  $('#agentStatus').classList.remove('hidden');
+  $('#agentResult').innerHTML = '';
+  const t0 = Date.now();
+  const timer = setInterval(() => { $('#agentStatusText').textContent = `Junie is working… ${((Date.now() - t0) / 1000).toFixed(0)}s`; }, 250);
+  try {
+    const res = await api('/agent/run', { method: 'POST', body: JSON.stringify({ task, model: $('#agentModel').value, auto_apply: $('#autoApply').checked }) });
+    const t = res.transcript;
+    clearInterval(timer); $('#agentStatus').classList.add('hidden');
+    const verify = t.verify;
+    const verifyClass = verify ? (verify.ok ? 'verify-pass' : 'verify-fail') : '';
+    const verifyHtml = verify ? `
+      <div class="card plan-card ${verifyClass}"><h4>Verify — ${verify.ok ? 'tests pass ✅' : 'tests failing ❌'}</h4>
+        <pre class="action-body" style="background:#0a0b0f;border-radius:8px;padding:10px;font-family:var(--mono);font-size:11px;max-height:220px;overflow:auto;white-space:pre-wrap">${esc((verify.stdout || '') + (verify.stderr ? '\n' + verify.stderr : ''))}</pre></div>` : '';
+    const files = (t.files_changed || []);
+    const proposed = (t.proposed_files || []);
+    $('#agentResult').innerHTML = `
+      <div class="transcript">
+        <div class="card t-head"><div class="t-icon">${t.demo ? '🧪' : '✅'}</div>
+          <div><h3>${esc(t.summary || 'Done.')}</h3>
+            <div class="t-meta"><span class="tag purple">${esc(t.model_label || t.model_key)}</span><span class="tag">${(t.duration_ms / 1000).toFixed(1)} s</span><span class="tag">${fmtCost(t.cost)} · ${fmtNum(t.total_tokens)} tok</span>${t.demo ? '<span class="tag yellow">offline demo brain</span>' : ''}${t.auto_apply ? '<span class="tag green">auto-applied</span>' : '<span class="tag yellow">preview only</span>'}</div>
+          </div></div>
+        ${t.warnings && t.warnings.length ? `<div class="warn">${t.warnings.map(esc).join('<br>')}</div>` : ''}
+        <div class="card plan-card"><h4>Plan — ${esc(t.plan?.summary || '')}</h4>
+          <ol class="plan-steps">${(t.plan?.steps || []).map((s, i) => `<li><span class="step-n">${i + 1}</span><span><b>${esc(s.title)}</b>${s.detail ? ' — ' + esc(s.detail) : ''}</span></li>`).join('')}</ol>
+        </div>
+        <div class="block-title" style="padding:0 4px">Execution trace</div>
+        ${(t.actions || []).map(actionHtml).join('')}
+        ${verifyHtml}
+        ${t.refine ? `<div class="card plan-card"><h4>Refine pass</h4><p style="color:var(--text2);font-size:12px">${esc(t.refine.explanation || '')}</p><div class="hint" style="margin-top:6px">${(t.refine.applied || []).map(p => '✎ ' + esc(p)).join('<br>')}</div></div>` : ''}
+        ${files.length ? `<div class="card plan-card"><h4>Files changed</h4>${files.map(f => `<div class="hint" style="font-family:var(--mono)">✎ ${esc(f)}</div>`).join('')}</div>` : ''}
+        ${proposed.length ? `<div class="card plan-card"><h4>Proposed files (not written — auto-apply off)</h4>${proposed.map(f => `<div class="hint" style="font-family:var(--mono)">◌ ${esc(f.path)} (${f.content.length} chars)</div>`).join('')}</div>` : ''}
+      </div>`;
+    refreshCredits(); loadFilesAndIndex();
+    toast(t.demo ? 'Demo run complete (connect a real model to auto-execute)' : 'Agent finished', 'ok');
+  } catch (e) {
+    clearInterval(timer); $('#agentStatus').classList.add('hidden');
+    $('#agentResult').innerHTML = `<div class="warn" style="border-color:rgba(248,113,113,.5);color:#fecaca">⚠ ${esc(e.message)}</div>`;
+    toast(e.message, 'error');
+  } finally { state.sending = false; $('#agentRunBtn').disabled = false; }
+});
+
+/* ── models grid ────────────────────────────────────────── */
+function statusLabel(s) { return { connected: 'Connected', missing_key: 'Missing key', unreachable: 'Ollama offline', offline: 'Forced offline' }[s] || s; }
+async function renderModelCards() {
+  try { await loadModels(); } catch (_) {}
+  $('#modelCards').innerHTML = state.models.map(m => `
+    <div class="card model-card${m.is_default ? ' is-default' : ''}">
+      <div class="mc-provider">${esc(m.provider)}</div>
+      <div class="mc-top"><div class="mc-name">${esc(m.label)}</div><span class="status-pill status-${esc(m.status)}">${esc(statusLabel(m.status))}</span></div>
+      <div class="mc-best">${esc(m.best_for || '')}</div>
+      <div class="mc-price">${m.free ? 'free · unmetered' : `${m.in_price} / 1K in · ${m.out_price} / 1K out (credits)`}</div>
+      <div class="mc-stats"><span><b>${fmtNum(m.stats?.calls || 0)}</b>calls</span><span><b>${fmtNum(m.stats?.tokens || 0)}</b>tokens</span><span><b>${fmtCost(m.stats?.cost || 0)}</b>spent</span><span><b>${fmtNum(Math.round(m.stats?.avg_latency || 0))}</b>avg ms</span></div>
+      <div class="mc-foot">${m.is_default ? '<span class="default-badge">★ Default</span>' : `<button class="btn-ghost small" data-set-default="${esc(m.key)}">Set as default</button>`}<span class="hint">${esc(m.model || '')}</span></div>
+    </div>`).join('');
+}
+$('#modelCards').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-set-default]'); if (!btn) return;
+  try { await api('/models/default', { method: 'POST', body: JSON.stringify({ key: btn.dataset.setDefault }) }); toast('Default model updated', 'ok'); renderModelCards(); } catch (err) { toast(err.message, 'error'); }
+});
+
+/* ── settings ───────────────────────────────────────────── */
+async function loadSettings() {
+  try {
+    const s = await api('/settings'); state.settings = s;
+    $('#settingProjectPath').value = s.project_path || '';
+    $('#settingOfflineMode').checked = !!s.offline_mode;
+    $('#settingOllamaUrl').value = s.ollama?.base_url || '';
+    $('#settingOllamaModel').value = s.ollama?.model || '';
+    $('#settingBudget').value = s.credits?.monthly_budget ?? 35;
+    $('#settingThreshold').value = s.credits?.warning_threshold ?? 5;
+    $('#localConfigPath').textContent = (s.config_files && s.config_files.local) || 'config.local.yaml';
+    const keyStatus = (id, ok) => { const el = $(id); el.textContent = ok ? 'configured' : 'not set'; el.classList.toggle('ok', !!ok); };
+    keyStatus('#keyStatusOpenai', s.api_keys?.openai); keyStatus('#keyStatusAnthropic', s.api_keys?.anthropic); keyStatus('#keyStatusGoogle', s.api_keys?.google);
+    await loadModels(); $('#settingDefaultModel').value = state.defaultModel;
+  } catch (e) { toast('Failed to load settings: ' + e.message, 'error'); }
+}
+const keyField = (id) => { const v = $(id).value.trim(); $(id).value = ''; return v; };
+$('#saveSettingsBtn').addEventListener('click', async () => {
+  const payload = {
+    project_path: $('#settingProjectPath').value.trim(),
+    offline_mode: $('#settingOfflineMode').checked,
+    default_model: $('#settingDefaultModel').value,
+    ollama_base_url: $('#settingOllamaUrl').value.trim(),
+    ollama_model: $('#settingOllamaModel').value.trim(),
+    monthly_budget: parseFloat($('#settingBudget').value || '35'),
+    warning_threshold: parseFloat($('#settingThreshold').value || '5'),
+    api_keys: {}, clear_keys: [],
+  };
+  for (const [field, name] of [['#keyOpenai', 'openai'], ['#keyAnthropic', 'anthropic'], ['#keyGoogle', 'google']]) {
+    const v = keyField(field);
+    if (v.toLowerCase() === 'clear') payload.clear_keys.push(name);
+    else if (v) payload.api_keys[name] = v;
+  }
+  if (!Object.keys(payload.api_keys).length) delete payload.api_keys;
+  if (!payload.clear_keys.length) delete payload.clear_keys;
+  try {
+    await api('/settings', { method: 'POST', body: JSON.stringify(payload) });
+    $('#settingsSavedHint').textContent = 'Saved ✓ ' + new Date().toLocaleTimeString();
+    toast('Settings saved', 'ok');
+    await loadModels(); await refreshCredits();
+  } catch (e) { toast(e.message, 'error'); }
+});
+
+/* ── init ───────────────────────────────────────────────── */
+(async function init() {
+  emptyState();
+  await loadModels();
+  await refreshCredits();
+  await loadSessions();
+  await loadFilesAndIndex();
+  setInterval(refreshCredits, 60000);
+})();
+</script>
+</body>
+</html>
