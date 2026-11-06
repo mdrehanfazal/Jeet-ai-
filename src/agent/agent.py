@@ -1,4 +1,4 @@
-"""Junie-clone orchestrator: plan → execute → verify → refine.
+"""Shadow Agent orchestrator: plan → execute → verify → refine.
 
 Safety model
 ------------
@@ -19,7 +19,7 @@ from ..models import wrapper
 from . import executor, planner
 
 AGENT_SYSTEM = (
-    "You are Junie, an autonomous senior coding agent inside a private IDE. "
+    "You are Shadow Agent, an autonomous senior coding agent inside a private IDE. "
     "You work in ONE project rooted at the project root — never escape it.\n"
     "Each turn respond with STRICT JSON only (no prose, no fences):\n"
     '{"thought": "why this next step", "action": "<tool>", "args": {...}}\n\n'

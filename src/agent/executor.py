@@ -1,4 +1,4 @@
-"""Sandboxed tool belt for the Junie-clone agent.
+"""Sandboxed tool belt for the Shadow Agent.
 
 Every tool is confined to the project root (path escapes are rejected) and
 commands run WITHOUT a shell against a strict allowlist.

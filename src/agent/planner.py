@@ -1,4 +1,4 @@
-"""Junie-clone planner: task → structured plan.
+"""Shadow Agent planner: task → structured plan.
 
 With a cloud/local model the plan is produced by the model (JSON mode, one
 repair attempt). On the offline Demo brain — or on any parse failure — a
@@ -13,7 +13,7 @@ from ..config import load_config
 from ..models import wrapper
 
 SYSTEM_PROMPT = (
-    "You are Junie, an autonomous senior coding agent embedded in a private IDE. "
+    "You are Shadow Agent, an autonomous senior coding agent embedded in a private IDE. "
     "Given a task and a snapshot of the project, produce a concise execution plan.\n"
     "Respond with STRICT JSON only, no prose, matching:\n"
     '{"summary": "one sentence", "steps": [{"title": "...", "detail": "..."}]}\n'

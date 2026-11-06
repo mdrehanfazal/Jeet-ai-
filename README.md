@@ -1,4 +1,4 @@
-# Jeet — Private AI Assistant
+# Shadow — Private AI Assistant
 
 > Personal clone of the JetBrains AI Assistant premium experience (AI Ultimate tier), rebuilt from scratch for local, private use.
 > **Not affiliated with JetBrains. For personal use only — do not distribute.**
@@ -14,14 +14,14 @@ Everything runs on your machine. A **Demo brain** (offline heuristics) works out
 | C | AI code generation & completion (inline complete button at cursor) | ✅ |
 | D | Test & docstring generation with one-click save | ✅ pytest skeletons · Google-style docstrings |
 | E | AI chat with persistent history (SQLite), sessions sidebar | ✅ |
-| F | **Junie-clone agent**: Plan → Execute → Verify → Refine, sandboxed to project root, allowlisted shell-free commands | ✅ |
+| F | **Shadow Agent** (Junie-inspired): Plan → Execute → Verify → Refine, sandboxed to project root, allowlisted shell-free commands | ✅ |
 | G | Credit system simulation (35 credits/month, 1 credit = $1, low-balance warning) | ✅ |
 | H | Local model support (Ollama offline) + offline mode switch | ✅ |
 
 ## Quickstart
 
 ```bash
-cd Jeet-ai-
+cd Shadow-ai-
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python src/main.py            # → http://localhost:8000

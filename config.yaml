@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# Jeet — Private AI Assistant · configuration
+# Shadow — Private AI Assistant · configuration
 # 1 credit = $1 (simulated). Monthly budget: 35 credits.
 # Prices below are in CREDITS PER 1K TOKENS.
 # Secrets belong in config.local.yaml (gitignored) or env vars:
@@ -7,10 +7,10 @@
 # ─────────────────────────────────────────────────────────────
 
 app:
-  name: "Jeet — Private AI Assistant"
-  version: "1.0.0"
+  name: "Shadow — Private AI Assistant"
+  version: "1.1.0"
 
-# Path that Jeet treats as "your project" for context indexing,
+# Path that Shadow treats as "your project" for context indexing,
 # agent actions and file viewing. "." = this repository.
 # Absolute paths like "/home/user/my-project" work too.
 project_path: "."
@@ -37,8 +37,8 @@ api_keys:
 models:
   demo:
     provider: demo
-    label: "Jeet Demo (Offline)"
-    model: "jeet-demo-1"
+    label: "Shadow Demo (Offline)"
+    model: "shadow-demo-1"
     in_price: 0.0
     out_price: 0.0
     best_for: "Offline scaffolding, test & doc generation, planning"

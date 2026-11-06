@@ -1,4 +1,4 @@
-"""Configuration loader for Jeet — Private AI Assistant.
+"""Configuration loader for Shadow — Private AI Assistant.
 
 Reads ``config.yaml`` (committed defaults) and merges ``config.local.yaml``
 (gitignored secrets) plus environment variables on top of it.
@@ -17,7 +17,7 @@ CONFIG_PATH = ROOT / "config.yaml"
 LOCAL_CONFIG_PATH = ROOT / "config.local.yaml"
 
 DEFAULTS: dict[str, Any] = {
-    "app": {"name": "Jeet — Private AI Assistant", "version": "1.0.0"},
+    "app": {"name": "Shadow — Private AI Assistant", "version": "1.1.0"},
     "project_path": ".",
     "offline_mode": False,
     "default_model": "demo",

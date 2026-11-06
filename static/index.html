@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jeet — Private AI Assistant</title>
-<link rel="icon" href="/static/assets/jeet-logo.png">
+<title>Shadow — Private AI Assistant</title>
+<link rel="icon" href="/static/assets/shadow-logo.png">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
 :root{
@@ -307,8 +307,8 @@ label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
 <body>
 
 <header class="topbar">
-  <img class="logo" src="/static/assets/jeet-logo.png" alt="Jeet">
-  <div class="brand"><b>Jeet<i>&nbsp;AI</i></b><span>Private AI Assistant</span></div>
+  <img class="logo" src="/static/assets/shadow-logo.png" alt="Shadow">
+  <div class="brand"><b>Shad<i>ow</i></b><span>Private AI Assistant</span></div>
   <div class="topbar-right">
     <span id="offlineBadge" class="badge offline hidden">◆ Offline mode</span>
     <button class="pill" id="creditPill" title="Open credits dashboard"><span class="dot"></span><span><b id="creditPillText">…</b> credits left</span></button>
@@ -319,7 +319,7 @@ label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
 <main class="shell">
   <nav class="sidebar">
     <button class="nav-btn active" data-view="chat" title="Chat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Chat</span></button>
-    <button class="nav-btn" data-view="agent" title="Junie Agent"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></svg><span>Agent</span></button>
+    <button class="nav-btn" data-view="agent" title="Shadow Agent Agent"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z"/></svg><span>Agent</span></button>
     <button class="nav-btn" data-view="context" title="Context & Files"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Files</span></button>
     <button class="nav-btn" data-view="models" title="Models"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M8 7.8l2.6 7.4M16 7.8l-2.6 7.4M8.4 6h7.2"/></svg><span>Models</span></button>
     <button class="nav-btn" data-view="credits" title="Credits"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg><span>Credits</span></button>
@@ -339,7 +339,7 @@ label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
           <div id="messages" class="messages"></div>
           <div class="composer card">
             <div id="openTabs" class="open-tabs"></div>
-            <textarea id="chatInput" rows="2" placeholder="Ask Jeet anything about your code…   (Ctrl+Enter to send)"></textarea>
+            <textarea id="chatInput" rows="2" placeholder="Ask Shadow anything about your code…   (Ctrl+Enter to send)"></textarea>
             <div class="composer-bar">
               <div class="composer-left">
                 <select id="chatModel" class="select model-select" title="Model"></select>
@@ -360,7 +360,7 @@ label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
     <div id="view-agent" class="view">
       <div class="panel">
         <div class="agent-box">
-          <h1><span class="spark">⚡</span>Junie Agent</h1>
+          <h1><span class="spark">⚡</span>Shadow Agent Agent</h1>
           <p class="sub">Autonomous coding loop: <b>Plan → Execute → Verify → Refine</b>. The agent is sandboxed to your project root, writes only inside it, and runs commands from a strict allowlist (<code>pytest</code>, <code>python</code>, <code>npm test</code>…) without a shell. Turn off <b>Auto-apply</b> to preview every change before it touches disk.</p>
           <textarea id="agentTask" rows="3" placeholder="Describe the task… e.g. “Add a healthz endpoint with a test” or “Write pytest tests for src/models/demo.py”"></textarea>
           <div class="agent-options">
@@ -507,7 +507,7 @@ label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
 
 <script>
 /* ════════════════════════════════════════════════════════════
-   Jeet — Private AI Assistant · frontend logic
+   Shadow — Private AI Assistant · frontend logic
    ════════════════════════════════════════════════════════════ */
 'use strict';
 const $ = (s, r) => (r || document).querySelector(s);
@@ -647,7 +647,7 @@ async function refreshCreditsPage() {
 function emptyState() {
   $('#messages').innerHTML = `
     <div class="empty-state">
-      <img src="/static/assets/jeet-logo.png" alt="Jeet">
+      <img src="/static/assets/shadow-logo.png" alt="Shadow">
       <h2>How can I help with your code?</h2>
       <p>Project context and open files are injected automatically — ask about anything in this repo.</p>
       <div class="suggestions">
@@ -934,7 +934,7 @@ $('#agentRunBtn').addEventListener('click', async () => {
   $('#agentStatus').classList.remove('hidden');
   $('#agentResult').innerHTML = '';
   const t0 = Date.now();
-  const timer = setInterval(() => { $('#agentStatusText').textContent = `Junie is working… ${((Date.now() - t0) / 1000).toFixed(0)}s`; }, 250);
+  const timer = setInterval(() => { $('#agentStatusText').textContent = `Shadow Agent is working… ${((Date.now() - t0) / 1000).toFixed(0)}s`; }, 250);
   try {
     const res = await api('/agent/run', { method: 'POST', body: JSON.stringify({ task, model: $('#agentModel').value, auto_apply: $('#autoApply').checked }) });
     const t = res.transcript;
