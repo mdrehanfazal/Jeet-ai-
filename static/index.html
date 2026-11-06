@@ -19,7 +19,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:radial-gradient(1200px 800px at 70% -10%,rgba(139,92,246,.14),transparent 60%),radial-gradient(900px 700px at -10% 110%,rgba(255,79,163,.10),transparent 55%),var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;overflow:hidden}
+body{background:radial-gradient(1200px 800px at 70% -10%,rgba(139,92,246,.14),transparent 60%),radial-gradient(900px 700px at -10% 110%,rgba(255,79,163,.10),transparent 55%),var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;overflow:hidden;display:flex;flex-direction:column}
 button{font-family:inherit;cursor:pointer}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-thumb{background:#2c2d3a;border-radius:6px}
@@ -49,8 +49,7 @@ button{font-family:inherit;cursor:pointer}
 .hidden{display:none !important}
 
 /* ── Layout ─────────────────────────────────────────────── */
-.shell{display:flex;height:calc(100vh - 56px)}
-.low-credit:not(.hidden) ~ .shell,.shell{height:calc(100vh - 56px)}
+.shell{display:flex;flex:1;min-height:0}
 .sidebar{width:64px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;z-index:10}
 .nav-btn{width:46px;height:46px;border-radius:11px;border:1px solid transparent;background:transparent;color:var(--text3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.15s;position:relative}
 .nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
