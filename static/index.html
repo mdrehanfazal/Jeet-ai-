@@ -465,11 +465,15 @@ label.flabel{font-size:11px;color:var(--text2);letter-spacing:.03em}
             </div>
           </div>
           <div class="card setting-card">
-            <h3>API keys <span style="text-transform:none;letter-spacing:0;color:var(--text3)">(leave blank to keep existing, type “clear” to wipe)</span></h3>
-            <div class="key-row"><span class="kname">OpenAI</span><input id="keyOpenai" type="password" class="txt-input" placeholder="sk-…" autocomplete="off"><span class="key-status" id="keyStatusOpenai">…</span></div>
-            <div class="key-row"><span class="kname">Anthropic</span><input id="keyAnthropic" type="password" class="txt-input" placeholder="sk-ant-…" autocomplete="off"><span class="key-status" id="keyStatusAnthropic">…</span></div>
-            <div class="key-row"><span class="kname">Google (Gemini)</span><input id="keyGoogle" type="password" class="txt-input" placeholder="AIza…" autocomplete="off"><span class="key-status" id="keyStatusGoogle">…</span></div>
-            <p class="hint">Env vars <code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code> / <code>GOOGLE_API_KEY</code> also work and are never written to disk.</p>
+            <h3>API keys <span style="text-transform:none;letter-spacing:0;color:var(--text3)">(FREE internet models need no credit card — leave blank to keep existing, type “clear” to wipe)</span></h3>
+            <p class="hint" style="margin-bottom:10px">One Google key unlocks <b>free Gemini 2.5 Flash — 1,500 req/day</b>. All keys below stay on your machine (<code>config.local.yaml</code>). Free daily quotas stack: Gemini Flash 1,500 + Groq 1,000 + OpenRouter 50–1,000 + Mistral free tier ≈ <b>3,000–4,000 requests/day at $0</b>.</p>
+            <div class="key-row"><span class="kname">Google (Gemini)</span><input id="keyGoogle" type="password" class="txt-input" placeholder="AIza… — free via AI Studio" autocomplete="off"><span class="key-status" id="keyStatusGoogle">…</span></div>
+            <div class="key-row"><span class="kname">Groq</span><input id="keyGroq" type="password" class="txt-input" placeholder="gsk_… — free via console.groq.com" autocomplete="off"><span class="key-status" id="keyStatusGroq">…</span></div>
+            <div class="key-row"><span class="kname">OpenRouter</span><input id="keyOpenrouter" type="password" class="txt-input" placeholder="sk-or-… — free via openrouter.ai/keys" autocomplete="off"><span class="key-status" id="keyStatusOpenrouter">…</span></div>
+            <div class="key-row"><span class="kname">Mistral</span><input id="keyMistral" type="password" class="txt-input" placeholder="… — free via console.mistral.ai" autocomplete="off"><span class="key-status" id="keyStatusMistral">…</span></div>
+            <div class="key-row"><span class="kname">OpenAI (paid)</span><input id="keyOpenai" type="password" class="txt-input" placeholder="sk-… — metered" autocomplete="off"><span class="key-status" id="keyStatusOpenai">…</span></div>
+            <div class="key-row"><span class="kname">Anthropic (paid)</span><input id="keyAnthropic" type="password" class="txt-input" placeholder="sk-ant-… — metered" autocomplete="off"><span class="key-status" id="keyStatusAnthropic">…</span></div>
+            <p class="hint">Env vars <code>GOOGLE_API_KEY</code> / <code>GROQ_API_KEY</code> / <code>OPENROUTER_API_KEY</code> / <code>MISTRAL_API_KEY</code> / <code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code> also work and are never written to disk.</p>
           </div>
           <div class="card setting-card">
             <h3>Credit budget</h3>
@@ -1004,6 +1008,7 @@ async function loadSettings() {
     $('#localConfigPath').textContent = (s.config_files && s.config_files.local) || 'config.local.yaml';
     const keyStatus = (id, ok) => { const el = $(id); el.textContent = ok ? 'configured' : 'not set'; el.classList.toggle('ok', !!ok); };
     keyStatus('#keyStatusOpenai', s.api_keys?.openai); keyStatus('#keyStatusAnthropic', s.api_keys?.anthropic); keyStatus('#keyStatusGoogle', s.api_keys?.google);
+    keyStatus('#keyStatusGroq', s.api_keys?.groq); keyStatus('#keyStatusOpenrouter', s.api_keys?.openrouter); keyStatus('#keyStatusMistral', s.api_keys?.mistral);
     await loadModels(); $('#settingDefaultModel').value = state.defaultModel;
   } catch (e) { toast('Failed to load settings: ' + e.message, 'error'); }
 }
@@ -1019,7 +1024,8 @@ $('#saveSettingsBtn').addEventListener('click', async () => {
     warning_threshold: parseFloat($('#settingThreshold').value || '5'),
     api_keys: {}, clear_keys: [],
   };
-  for (const [field, name] of [['#keyOpenai', 'openai'], ['#keyAnthropic', 'anthropic'], ['#keyGoogle', 'google']]) {
+  const allKeys = [['#keyOpenai', 'openai'], ['#keyAnthropic', 'anthropic'], ['#keyGoogle', 'google'], ['#keyGroq', 'groq'], ['#keyOpenrouter', 'openrouter'], ['#keyMistral', 'mistral']];
+  for (const [field, name] of allKeys) {
     const v = keyField(field);
     if (v.toLowerCase() === 'clear') payload.clear_keys.push(name);
     else if (v) payload.api_keys[name] = v;

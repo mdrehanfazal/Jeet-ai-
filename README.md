@@ -9,7 +9,7 @@ Everything runs on your machine. A **Demo brain** (offline heuristics) works out
 
 | # | Feature | Status |
 |---|---------|--------|
-| A | Multi-model selection & switching (GPT-5 · Claude 4.5 Sonnet · Gemini 2.5 Pro · Ollama · Demo) | ✅ per-conversation picker, cost tracking |
+| A | Multi-model selection & switching (GPT-5 · Claude 4.5 Sonnet · Gemini 2.5 Pro · **free internet tiers: Gemini Flash · Groq · OpenRouter · Mistral** · Ollama · Demo) | ✅ per-conversation picker, cost tracking |
 | B | PSI-style context awareness — project scan, Python **AST symbol table**, open tabs + cursor line injection, **TF-IDF semantic index** | ✅ |
 | C | AI code generation & completion (inline complete button at cursor) | ✅ |
 | D | Test & docstring generation with one-click save | ✅ pytest skeletons · Google-style docstrings |
@@ -38,6 +38,21 @@ Open **http://localhost:8000** — the UI is served by the same server (no Node 
 4. **Credits** — ring gauge, per-model spend, daily bars, recent usage. Demo/Ollama cost 0.
 5. **Models** — status per model (connected / missing key / Ollama offline), one-click default.
 6. **Settings** — project root, offline mode, monthly budget, API keys → saved to `config.local.yaml` (gitignored).
+
+### Free internet AI (no credit card, $0)
+
+Shadow ships with free-tier cloud models preconfigured. In **Settings → API keys**, paste any of these — each is genuinely free and they **stack to ~3–4k requests/day**:
+
+| Key field | Where to get it (takes ~2 min) | Free quota | Model |
+|---|---|---|---|
+| **Google** | https://aistudio.google.com → *Get API key* | **1,500 requests/day** | Gemini 2.5 Flash (also unlocks paid Pro models if you add billing) |
+| **Groq** | https://console.groq.com → API Keys | 30 req/min · ~1,000 req/day | `openai/gpt-oss-120b` |
+| **OpenRouter** | https://openrouter.ai/keys | 20 req/min · 50 req/day (1,000 after any $10 top-up) | `deepseek/deepseek-r1:free` |
+| **Mistral** | https://console.mistral.ai → API keys (phone verif.) | Experiment tier | `mistral-small-latest` |
+
+Then pick e.g. **Gemini 2.5 Flash (Free)** or **Groq gpt-oss-120b (Free)** in the Chat model dropdown and **Set as default** in Models. These never consume your simulated 35 credits. Limits are per-provider and reset daily — when one is exhausted for the day, switch to another, or to Ollama/Demo. Truly unlimited, zero-rate-limit AI = local models (`ollama pull llama3.1`), always free offline.
+
+Env vars work too (never written to disk): `GOOGLE_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `MISTRAL_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`.
 
 ## Configuration
 

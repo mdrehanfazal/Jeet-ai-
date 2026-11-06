@@ -49,6 +49,9 @@ def model_availability(cfg: dict | None = None) -> list[dict[str, Any]]:
             key_name = {"openai": "openai", "anthropic": "anthropic", "google": "google"}[provider]
             configured = bool((keys.get(key_name) or "").strip())
             status = "offline" if offline else ("connected" if configured else "missing_key")
+        elif provider == "openai_compat":
+            configured = bool((keys.get(mdl.get("key_name", "")) or "").strip())
+            status = "offline" if offline else ("connected" if configured else "missing_key")
         elif provider == "ollama":
             configured = local_model.ollama_available(cfg.get("ollama", {}).get("base_url", "http://localhost:11434"))
             status = "connected" if configured else "unreachable"
@@ -62,7 +65,7 @@ def model_availability(cfg: dict | None = None) -> list[dict[str, Any]]:
             "best_for": mdl.get("best_for", ""),
             "in_price": mdl.get("in_price", 0.0),
             "out_price": mdl.get("out_price", 0.0),
-            "free": provider in ("demo", "ollama"),
+            "free": provider in ("demo", "ollama") or bool(mdl.get("free")),
             "configured": configured,
             "status": status,
             "is_default": key == cfg.get("default_model"),
@@ -91,6 +94,38 @@ def _call_openai(cfg: dict, mdl: dict, prompt: str, system_prompt: str | None,
         resp = _post("max_tokens")
     if resp.status_code != 200:
         raise ModelError(f"OpenAI error (HTTP {resp.status_code}): {resp.text[:400]}")
+    data = resp.json()
+    text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
+    usage = data.get("usage") or {}
+    pt = int(usage.get("prompt_tokens") or estimate_tokens(prompt + (system_prompt or "")))
+    ct = int(usage.get("completion_tokens") or estimate_tokens(text))
+    return text, pt, ct
+
+
+def _call_openai_compat(cfg: dict, mdl: dict, prompt: str, system_prompt: str | None,
+                        max_tokens: int) -> tuple[str, int, int]:
+    """Generic OpenAI-compatible chat completions (Groq, OpenRouter, Mistral…)."""
+    key_name = mdl.get("key_name", "openai")
+    api_key = (cfg.get("api_keys", {}).get(key_name) or "").strip()
+    base_url = (mdl.get("base_url") or "").rstrip("/")
+    if not base_url:
+        raise ModelError(f"Model '{mdl.get('label', key_name)}' is missing its base_url.", 500)
+    if not api_key:
+        hints = {"groq": "https://console.groq.com (free, no card)",
+                 "openrouter": "https://openrouter.ai/keys (free, no card)",
+                 "mistral": "https://console.mistral.ai (free Experiment tier)"}
+        raise ModelError(f"{key_name.capitalize()} API key not configured. Get a FREE key at {hints.get(key_name, 'the provider console')} — then paste it in Settings → API keys.", 400)
+    messages = ([{"role": "system", "content": system_prompt}] if system_prompt else []) + \
+               [{"role": "user", "content": prompt}]
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json",
+               "HTTP-Referer": "https://github.com/mdrehanfazal/Jeet-ai-", "X-Title": "Shadow"}
+    body = {"model": mdl.get("model"), "messages": messages, "max_tokens": max_tokens}
+    try:
+        resp = httpx.post(f"{base_url}/chat/completions", json=body, headers=headers, timeout=120)
+    except httpx.HTTPError as exc:
+        raise ModelError(f"Cannot reach {base_url}: {exc}") from exc
+    if resp.status_code != 200:
+        raise ModelError(f"{key_name.capitalize()} error (HTTP {resp.status_code}): {resp.text[:400]}")
     data = resp.json()
     text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "").strip()
     usage = data.get("usage") or {}
@@ -180,7 +215,7 @@ def call_model(model_key: str | None, prompt: str, system_prompt: str | None = N
     provider = mdl.get("provider", "demo")
 
     forced_offline = False
-    if cfg.get("offline_mode") and provider in ("openai", "anthropic", "google"):
+    if cfg.get("offline_mode") and provider in ("openai", "anthropic", "google", "openai_compat"):
         mdl = registry.get("ollama", mdl)
         provider, key, forced_offline = "ollama", "ollama", True
 
@@ -190,6 +225,8 @@ def call_model(model_key: str | None, prompt: str, system_prompt: str | None = N
         pt, ct = estimate_tokens((system_prompt or "") + prompt), estimate_tokens(text)
     elif provider == "ollama":
         text, pt, ct = _call_ollama(cfg, mdl, prompt, system_prompt)
+    elif provider == "openai_compat":
+        text, pt, ct = _call_openai_compat(cfg, mdl, prompt, system_prompt, max_tokens)
     elif provider == "openai":
         text, pt, ct = _call_openai(cfg, mdl, prompt, system_prompt, max_tokens)
     elif provider == "anthropic":
@@ -200,7 +237,7 @@ def call_model(model_key: str | None, prompt: str, system_prompt: str | None = N
         raise ModelError(f"Unknown provider '{provider}' for model '{key}'.", 500)
 
     latency_ms = int((time.perf_counter() - start) * 1000)
-    free = provider in ("demo", "ollama")
+    free = provider in ("demo", "ollama") or bool(mdl.get("free"))
     cost = 0.0 if free else (pt / 1000.0 * float(mdl.get("in_price", 0.0)) +
                               ct / 1000.0 * float(mdl.get("out_price", 0.0)))
 

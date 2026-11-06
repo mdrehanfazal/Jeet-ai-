@@ -49,7 +49,24 @@ def test_models_listed(client):
     resp = client.get("/api/models")
     assert resp.status_code == 200
     keys = {m["key"] for m in resp.json()["models"]}
-    assert {"demo", "gpt-5", "claude-4.5-sonnet", "gemini-2.5-pro", "ollama"} <= keys
+    assert {"demo", "gpt-5", "claude-4.5-sonnet", "gemini-2.5-pro", "ollama",
+            "gemini-2.5-flash", "groq-gpt-oss-120b", "openrouter-deepseek-r1",
+            "mistral-small"} <= keys
+
+
+def test_free_models_are_free_and_unmetered(client):
+    resp = client.get("/api/models")
+    by_key = {m["key"]: m for m in resp.json()["models"]}
+    for key in ("gemini-2.5-flash", "groq-gpt-oss-120b", "openrouter-deepseek-r1", "mistral-small"):
+        assert by_key[key]["free"] is True
+        assert by_key[key]["status"] in ("missing_key", "connected")  # no key in tests
+
+
+def test_free_model_without_key_fails_without_network(client):
+    resp = client.post("/api/chat", json={"message": "hi", "model": "groq-gpt-oss-120b",
+                                          "include_context": False})
+    assert resp.status_code == 400
+    assert "console.groq.com" in resp.json()["detail"]
 
 
 def test_chat_demo_and_credits_metering(client):

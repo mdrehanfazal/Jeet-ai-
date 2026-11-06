@@ -23,9 +23,12 @@ DEFAULTS: dict[str, Any] = {
     "default_model": "demo",
     "credits": {"monthly_budget": 35.0, "warning_threshold": 5.0},
     "ollama": {"base_url": "http://localhost:11434", "model": "llama3.1:latest"},
-    "api_keys": {"openai": "", "anthropic": "", "google": ""},
+    "api_keys": {"openai": "", "anthropic": "", "google": "",
+                 "groq": "", "openrouter": "", "mistral": ""},
     "models": {},
 }
+
+KEY_NAMES = ("openai", "anthropic", "google", "groq", "openrouter", "mistral")
 
 _ENV_KEY_MAP = {
     "OPENAI_API_KEY": "openai",
@@ -97,7 +100,7 @@ def public_settings(cfg: dict[str, Any]) -> dict[str, Any]:
         "default_model": cfg.get("default_model"),
         "credits": cfg.get("credits", {}),
         "ollama": cfg.get("ollama", {}),
-        "api_keys": {name: bool((keys.get(name) or "").strip()) for name in ("openai", "anthropic", "google")},
+        "api_keys": {name: bool((keys.get(name) or "").strip()) for name in KEY_NAMES},
         "config_files": {
             "defaults": str(CONFIG_PATH),
             "local": str(LOCAL_CONFIG_PATH),

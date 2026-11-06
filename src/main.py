@@ -22,7 +22,7 @@ from pydantic import BaseModel  # noqa: E402
 
 from src import db  # noqa: E402
 from src.agent import agent as agent_module  # noqa: E402
-from src.config import load_config, public_settings, save_local_config  # noqa: E402
+from src.config import load_config, public_settings, save_local_config, KEY_NAMES  # noqa: E402
 from src.context import indexer, parser  # noqa: E402
 from src.models import wrapper  # noqa: E402
 
@@ -111,12 +111,12 @@ def update_settings(payload: SettingsIn) -> dict:
     if payload.api_keys:
         keys = updates.setdefault("api_keys", {})
         for k, v in payload.api_keys.items():
-            if k in ("openai", "anthropic", "google") and v and v.strip():
+            if k in KEY_NAMES and v and v.strip():
                 keys[k] = v.strip()
     if payload.clear_keys:
         keys = updates.setdefault("api_keys", {})
         for k in payload.clear_keys:
-            if k in ("openai", "anthropic", "google"):
+            if k in KEY_NAMES:
                 keys[k] = ""
     if updates:
         save_local_config(updates)

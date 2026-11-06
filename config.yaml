@@ -31,9 +31,13 @@ ollama:
 api_keys:
   openai: ""
   anthropic: ""
-  google: ""
+  google: ""       # also unlocks the FREE Gemini 2.5 Flash tier (1,500 req/day, no card)
+  groq: ""         # https://console.groq.com → API Keys (free, no card)
+  openrouter: ""   # https://openrouter.ai → Keys (free; 1000 :free req/day after $10 top-up, else 50/day)
+  mistral: ""      # https://console.mistral.ai → API keys (free Experiment tier, phone verification)
 
 # Model registry. `in_price` / `out_price` = credits per 1K tokens.
+# free: true  → never charges simulated credits (free tier / local / demo).
 models:
   demo:
     provider: demo
@@ -41,7 +45,46 @@ models:
     model: "shadow-demo-1"
     in_price: 0.0
     out_price: 0.0
+    free: true
     best_for: "Offline scaffolding, test & doc generation, planning"
+  gemini-2.5-flash:
+    provider: google
+    label: "Gemini 2.5 Flash (Free)"
+    model: "gemini-2.5-flash"
+    in_price: 0.0
+    out_price: 0.0
+    free: true
+    best_for: "Free internet AI — 1,500 requests/day, great general model"
+  groq-gpt-oss-120b:
+    provider: openai_compat
+    label: "Groq gpt-oss-120b (Free)"
+    model: "openai/gpt-oss-120b"
+    base_url: "https://api.groq.com/openai/v1"
+    key_name: groq
+    in_price: 0.0
+    out_price: 0.0
+    free: true
+    best_for: "Free internet AI — blazing speed, 30 req/min"
+  openrouter-deepseek-r1:
+    provider: openai_compat
+    label: "DeepSeek R1 · OpenRouter (Free)"
+    model: "deepseek/deepseek-r1:free"
+    base_url: "https://openrouter.ai/api/v1"
+    key_name: openrouter
+    in_price: 0.0
+    out_price: 0.0
+    free: true
+    best_for: "Free reasoning model, 50 req/day (1000 with $10 top-up)"
+  mistral-small:
+    provider: openai_compat
+    label: "Mistral Small · Experiment (Free)"
+    model: "mistral-small-latest"
+    base_url: "https://api.mistral.ai/v1"
+    key_name: mistral
+    in_price: 0.0
+    out_price: 0.0
+    free: true
+    best_for: "Free tier with phone verification, solid coding"
   gpt-5:
     provider: openai
     label: "GPT-5"
@@ -69,4 +112,5 @@ models:
     model: ""            # empty → uses ollama.model above
     in_price: 0.0
     out_price: 0.0
+    free: true
     best_for: "Free, private, fully offline completions"
